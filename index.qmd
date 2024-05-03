@@ -9,4 +9,28 @@ format:
     embed-resources: true
 ---
 
-## 
+### Project Goals
+
+DC residents can have vastly different outcomes along many dimensions for different demographics. Oftentimes, the neighborhood in which you live and the community to which you belong can lead to vastly different outcomes in terms of health, education, employment opportunities, etc. This project aims to explore whether demographic differences amongst student populations in DC public schools can be used to predict educational and/or employment outcomes.
+
+### Literature Review
+
+### Data Wrangling
+
+```{R}
+# add code here!
+```
+
+### Exploratory Analysis
+
+```{R}
+# add code here!
+```
+
+### Machine Learning Model
+
+```{R}
+# add code here!
+```
+
+### Findings
