@@ -1,0 +1,12 @@
+---
+title: "Index"
+author: "Anisha Kalra, Hannah Shepard-Moore, Gabriel Taylor, and Mitchell Zupko"
+editor: visual
+execute:
+  warning: false
+format:
+  html:
+    embed-resources: true
+---
+
+## 
