@@ -9,28 +9,177 @@ format:
     embed-resources: true
 ---
 
-### Project Goals
+# Project Goals
 
 DC residents can have vastly different outcomes along many dimensions for different demographics. Oftentimes, the neighborhood in which you live and the community to which you belong can lead to vastly different outcomes in terms of health, education, employment opportunities, etc. This project aims to explore whether demographic differences amongst student populations in DC public schools can be used to predict educational and/or employment outcomes.
 
-### Literature Review
+# Literature Review
 
-### Data Wrangling
+# Data Wrangling & Cleaning
+```{r}
+#packages used
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(sp)
+library(readxl)
+```
+
+{description of data and cleaning process}
+
+## Census Data
+
+This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia. The variables included are income, poverty status, SNAP participation, insurance coverage, Medicaid use, and occupants per room.
+
+```{r}
+#load variables
+library(tidycensus)
+demographics <- get_acs(geography= "tract",
+                  state= "DC",
+                  county = "District of Columbia",
+                  geometry= TRUE,
+                  variables= c("income"="DP03_0062E", 
+                               "poverty_status"="B17001_001",
+                               "SNAP_participation"="B22001_001",
+                               "insurance_coverage"="B27001_001",
+                               "medicaid"="B27010_001",
+                               "rm_occupants"="B25014_001"),
+                  year= 2022,
+                  progress= FALSE)
+#st_write(demographics, "demographics.shp")
+demographics <- read_sf("demographics.shp")
+
+#data cleaning
+demographics <- demographics %>%
+  select(-moe)
+map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
+wider_demographics <- demographics %>%
+  pivot_wider(names_from = "variable",
+              values_from = "estimate")
+```
+
+## School Demographics, Test Scores, and Locations
+
+This data comes from two sources, both of which provide data at the school level for elementary, middle, and high schools: District of Columbia Public Schools (proficiency) and DC Open Data (locations). The proficiency data includes both demographic data (racial and socioeconomic) and test data (english and math). The location data gives the latitude and longitude of each school.
+
+```{r}
+#read in the school data
+proficiency <- read_xlsx("proficiency.xlsx")
+#replacing "." with NAs
+proficiency[proficiency == "."] <- NA
+#missing data
+map_dbl(.x = proficiency, .f = ~ sum(is.na(.x)))
+
+
+#read in the location data
+locations <- read_csv("DC_Public_Schools.csv")
+locations <- locations %>%
+  select(LONGITUDE, LATITUDE, SCHOOL_NAM, GRADES)
+locations <- locations %>%
+  rename(school_name = SCHOOL_NAM)
+
+# match schools to locations
+school_locations <- full_join(proficiency, locations,
+                              by= "school_name")
+
+#clean the school locations dataset
+#take out NAs in school_locations
+school_locations <- school_locations %>%
+  filter(!is.na(LONGITUDE))
+school_locations <- st_as_sf(school_locations,
+                             coords = c("LONGITUDE", "LATITUDE")) %>%
+  st_set_crs(value = 4269)
+```
+
+## Combined Data
+
+```{r}
+# match locations and demographics
+st_crs(school_locations)
+schools <- st_join(wider_demographics, school_locations,
+                   join= st_contains)
+```
+
+## Data Cleaning
+
+```{r}
+# reducing NAs and changing names
+schools <- schools %>%
+  filter(!is.na(type)) %>%
+  filter(!is.na(school_name)) %>%
+  rename(income = DP03_0062)
+
+#turning school type into a factor
+schools <- schools %>%
+  mutate(type = factor(type, levels = c("es", "ms", "hs"),
+                       labels = c("Elementary School", "Middle School", "High School")))
+
+# demographic percents
+schools <- schools %>%
+  mutate(black_pop = if_else(black_pop == "n < 10", 1, as.numeric(black_pop))) 
+schools <- schools %>%
+  mutate(poor_pop = if_else(poor_pop == "n < 10", 1, as.numeric(poor_pop))) 
+schools <- schools %>%
+  mutate(percent_black = black_pop/english_test)
+schools <- schools %>%
+  mutate(percent_poor = poor_pop/english_test)
+
+#creation of outcome variables
+# continuous: percent proficient in English
+schools <- schools %>%
+  mutate(percent_ela_proficient = ela_proficient/english_test)
+# binary: (1) 50% or more proficient in English
+schools <- schools %>%
+  mutate(binary_ela_proficient = if_else(percent_ela_proficient >= .50, 1, 0))
+```
+
+# Exploratory Data Analysis
+
+### Where are there NAs?
+
+```{r}
+map_dbl(.x = schools, .f = ~ sum(is.na(.x)))
+```
+
+### Are there outliers?
+
+```{r}
+summary(schools)
+```
+
+### What is the distribution of student populations?
+
+```{r}
+schools %>%
+  ggplot(mapping= aes(x= percent_poor, fill=type)) +
+  geom_histogram(bins= 10) +
+  scale_x_continuous(breaks= c(0, .5, 1)) +
+  facet_wrap(~type) +
+  labs(x= "Percent of students who experience poverty",
+       y= "Number of students per school") +
+  theme(legend.position = "none") +
+  theme_minimal()
+
+schools %>%
+  ggplot(mapping= aes(x= percent_black, fill= type)) +
+  geom_histogram(bins= 10) +
+  theme_minimal()
+```
 
 ```{R}
 # add code here!
 ```
 
-### Exploratory Analysis
+# Geospatial Analysis
 
 ```{R}
 # add code here!
 ```
 
-### Machine Learning Model
+# Machine Learning Model
 
 ```{R}
 # add code here!
 ```
 
-### Findings
+# Findings
