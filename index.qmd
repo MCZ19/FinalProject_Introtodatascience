@@ -43,12 +43,12 @@ demographics <- get_acs(geography= "tract",
                   state= "DC",
                   county = "District of Columbia",
                   geometry= TRUE,
-                  variables= c("income"="DP03_0062E", 
-                               "poverty_status"="B17001_001",
-                               "SNAP_participation"="B22001_001",
-                               "insurance_coverage"="B27001_001",
-                               "medicaid"="B27010_001",
-                               "rm_occupants"="B25014_001"),
+                  variables= c("income" = "DP03_0062E", 
+                               "poverty_status" = "B17001_001",
+                               "SNAP_participation" = "B22001_001",
+                               "insurance_coverage" = "B27001_001",
+                               "medicaid" = "B27010_001",
+                               "rm_occupants" = "B25014_001"),
                   year= 2022,
                   progress= FALSE)
 
@@ -77,10 +77,18 @@ demographics <- merge(demographics, pop_stats_clean[, c("GEOID", "population")],
 
 demographics <- demographics %>%
   select(-moe)
+
 map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
+
 wider_demographics <- demographics %>%
   pivot_wider(names_from = "variable",
-              values_from = "estimate")
+              values_from = "estimate") |>
+  #convert totals to percentages
+  mutate(poverty_perc = (poverty_status/population),
+         SNAP_perc = (SNAP_participation/population),
+         insurance_perc = (insurance_coverage/population),
+         medicaid_perc = (medicaid/population))
+
 
 
 ```
