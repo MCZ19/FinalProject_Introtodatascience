@@ -27,6 +27,7 @@ library(sf)
 library(sp)
 library(tigris)
 library(readxl)
+library(dplyr)
 ```
 
 
@@ -37,6 +38,7 @@ This data comes from the 2022 American Community Survey, and includes census tra
 ```{r}
 #load variables
 library(tidycensus)
+
 demographics <- get_acs(geography= "tract",
                   state= "DC",
                   county = "District of Columbia",
@@ -49,16 +51,38 @@ demographics <- get_acs(geography= "tract",
                                "rm_occupants"="B25014_001"),
                   year= 2022,
                   progress= FALSE)
+
+#Loading Population separately, as it is at a different geo level
+pop_stats <- get_acs(geography= "block group",
+                  state= "DC",
+                  county = "District of Columbia",
+                  geometry= TRUE,
+                  variables= c("population" = "B01003_001"),
+                  year= 2022,
+                  progress= FALSE)
+
 #st_write(demographics, "demographics.shp")
 demographics <- read_sf("demographics.shp")
 
 #data cleaning
+pop_stats_clean <- pop_stats %>%
+  mutate(GEOID = substr(GEOID, 1, nchar(GEOID) - 1)) %>%
+  mutate(estimate = as.numeric(estimate)) %>%
+  select(-moe) %>% 
+  st_drop_geometry() |>
+  group_by(GEOID) %>% 
+  summarize(population = sum(estimate))
+
+demographics <- merge(demographics, pop_stats_clean[, c("GEOID", "population")], by = "GEOID", all.x = TRUE)
+
 demographics <- demographics %>%
   select(-moe)
 map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
 wider_demographics <- demographics %>%
   pivot_wider(names_from = "variable",
               values_from = "estimate")
+
+
 ```
 
 ## School Demographics, Test Scores, and Locations
