@@ -89,8 +89,6 @@ wider_demographics <- demographics %>%
          insurance_perc = (insurance_coverage/population),
          medicaid_perc = (medicaid/population))
 
-
-
 ```
 
 ## School Demographics, Test Scores, and Locations
@@ -337,7 +335,117 @@ schools %>%
 # Machine Learning Model
 
 ```{R}
-# add code here!
+# this is from Mitch and I's stretch exercise
+schools_cond <- schools |>
+  select(-NAME, 
+         -geometry, 
+         -GRADES, 
+         -GEOID,
+         -school_name,
+         -type) |>
+  na.omit() %>%
+  mutate_if(is.character, as.numeric)
+
+educ_rec <- recipe(formula = ~., data = schools_cond) %>% 
+  step_normalize %>% 
+  step_pca() 
+
+```
+
+```{R}
+educ_cv <- vfold_cv(schools_cond, v = 10)
+
+kmeans_spec <- k_means(
+  num_clusters = tune()) |>
+  set_engine(
+    "stats",
+    nstart = 100
+  )
+
+kmeans_wflow <- workflow(
+  preprocessor = educ_rec,
+  spec = kmeans_spec) 
+
+clust_num_grid <- grid_regular(
+  num_clusters(),
+  levels = 10
+)
+
+res <- tune_cluster(
+  kmeans_wflow,
+  resamples = educ_cv,
+  grid = clust_num_grid,
+  control = control_grid(save_pred = TRUE, 
+                         extract = identity),
+  metrics = cluster_metric_set(sse_within_total,
+                               silhouette_avg))
+
+```
+
+```{R}
+res %>%
+  collect_metrics() %>%
+  filter(.metric == "sse_within_total") %>%
+  ggplot(aes(x = num_clusters, y = mean)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = 1:10) +
+  labs(x = "Number of clusters",
+       y = "mean WSS over 5 folds") +
+  theme_minimal()
+
+res %>%
+  collect_metrics() %>%
+  filter(.metric == "silhouette_avg") %>%
+  ggplot(aes(x = num_clusters, 
+             y = mean)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = 1:10) +
+  labs(x = "Number of clusters",
+       y = "mean WSS over 5 folds") +
+  theme_minimal()
+
+educ_numeric <- educ_rec %>% 
+  prep() %>% 
+  bake(new_data = schools_cond)
+
+fviz_nbclust(educ_numeric, 
+             FUN = kmeans, 
+             method = "gap_stat")
+
+
+#3b
+kmeans_spec2 <- k_means(num_clusters = 1 %>% 
+                          set_engine("stats", 
+                                     nstart = 100))
+
+kmeans_wflow2 <- workflow(preprocessor = educ_rec, 
+                          spec = kmeans_spec2)
+
+#educ_kmeans_1 <- kmeans_wflow2 %>% 
+#  fit(data = schools_cond)
+
+#once again, using this fit codechunk returns the same error
+
+#3c
+
+cor(schools_cond)
+#For Math Proficient 
+#ela_proficient, math_4, #poverty_status
+
+#bind_cols(schools_cond,
+#          cluster = educ_kmeans_1 |>
+#            extract_cluster_assignment() |>
+#            pull(.cluster)) |>
+#  group_by(cluster) |>
+#  summarize(
+#    mean(ela_proficient),
+#    mean(math_4),
+#    mean(poverty_status) |>
+#      knitr::kable(digits = 3)
+#  )
+
 ```
 
 # Findings
