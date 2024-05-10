@@ -61,20 +61,26 @@ demographics <- get_acs(geography= "tract",
                   county = "District of Columbia",
                   geometry= TRUE,
                   variables= c("income" = "DP03_0062E", 
-                               "poverty_status" = "B17001_001",
-                               "SNAP_participation" = "B22001_001",
-                               "insurance_coverage" = "B27001_001",
-                               "medicaid" = "B27010_001",
-                               "rm_occupants" = "B25014_001"),
+                               "poverty_universe" = "B17001_001",
+                               "poverty_status" = "B17001_002",
+                               "SNAP_universe" = "B22001_001",
+                               "SNAP_status" = "B22001_002",
+                               "insurance_universe" = "B27001_001",
+                               "insurance_men" = "B27001_002",
+                               "insurance_women" = "B27001_030"),
                   year= 2022,
                   progress= FALSE)
 
-#Loading Population separately, as it is at a different geo level
-pop_stats <- get_acs(geography= "block group",
+#Loading Population and medicaid separately, as they are at a different geo level
+block_stats <- get_acs(geography= "block group",
                   state= "DC",
                   county = "District of Columbia",
                   geometry= TRUE,
-                  variables= c("population" = "B01003_001"),
+                  variables= c("population" = "B01003_001",
+                               "medicaid_19under" = "B27010_002",
+                               "medicaid_19to34" = "B27010_018",
+                               "medicaid_35to64" = "B27010_034",
+                               "medicaid_65older" = "B27010_051"),
                   year= 2022,
                   progress= FALSE)
 
@@ -83,15 +89,23 @@ pop_stats <- get_acs(geography= "block group",
 demographics <- read_sf("demographics.shp")
 
 #data cleaning
-pop_stats_clean <- pop_stats %>%
+
+block_stats_clean <- block_stats %>%
   mutate(GEOID = substr(GEOID, 1, nchar(GEOID) - 1)) %>%
   mutate(estimate = as.numeric(estimate)) %>%
   select(-moe) %>% 
   st_drop_geometry() |>
   group_by(GEOID) %>% 
-  summarize(population = sum(estimate))
+  pivot_wider(names_from = "variable",
+              values_from = "estimate")|>
+  mutate(medicaid = (medicaid_19under +
+                       medicaid_19to34 +
+                       medicaid_35to64 +
+                       medicaid_65older)) #|>
+  #aggregate()
+#^^^ Need to combine by GEOID, and sum the values associated with each GEOID
 
-demographics <- merge(demographics, pop_stats_clean[, c("GEOID", "population")], by = "GEOID", all.x = TRUE)
+demographics <- merge(demographics, block_stats_clean[, c("GEOID", "population")], by = "GEOID", all.x = TRUE)
 
 demographics <- demographics %>%
   select(-moe)
