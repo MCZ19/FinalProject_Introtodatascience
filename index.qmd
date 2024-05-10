@@ -28,6 +28,24 @@ library(sp)
 library(tigris)
 library(readxl)
 library(dplyr)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(recipes)
+library(ggplot2)
+library(janitor)
+library(patchwork)
+library(tidyclust)
+library(tidymodels)
+library(tidytext)
+library(igraph)
+library(ggraph)
+library(stringr)
+library(textrecipes)
+library(stopwords)
+library(glmnet) #glm package is incompatible with newer versions of R, according to error messages
+library(MachineShop)
+library(factoextra)
 ```
 
 
@@ -236,6 +254,7 @@ schools %>%
 
 ### How do test scores vary by poverty
 We tested both English and math scores, and they follow a similar trend, with some obvious outliers. As we explore further, we may need to pay attention the potential negative effects of income-based school segregation.
+
 ```{r}
 #English Scores
 schools %>%
@@ -343,6 +362,7 @@ schools_cond <- schools |>
          -GEOID,
          -school_name,
          -type) |>
+  st_drop_geometry() |>
   na.omit() %>%
   mutate_if(is.character, as.numeric)
 
@@ -423,8 +443,8 @@ kmeans_spec2 <- k_means(num_clusters = 1 %>%
 kmeans_wflow2 <- workflow(preprocessor = educ_rec, 
                           spec = kmeans_spec2)
 
-#educ_kmeans_1 <- kmeans_wflow2 %>% 
-#  fit(data = schools_cond)
+educ_kmeans_1 <- kmeans_wflow2 %>% 
+  fit(data = schools_cond)
 
 #once again, using this fit codechunk returns the same error
 
@@ -434,17 +454,17 @@ cor(schools_cond)
 #For Math Proficient 
 #ela_proficient, math_4, #poverty_status
 
-#bind_cols(schools_cond,
-#          cluster = educ_kmeans_1 |>
-#            extract_cluster_assignment() |>
-#            pull(.cluster)) |>
-#  group_by(cluster) |>
-#  summarize(
-#    mean(ela_proficient),
-#    mean(math_4),
-#    mean(poverty_status) |>
-#      knitr::kable(digits = 3)
-#  )
+bind_cols(schools_cond,
+          cluster = educ_kmeans_1 |>
+            extract_cluster_assignment() |>
+            pull(.cluster)) |>
+  group_by(cluster) |>
+  summarize(
+    mean(ela_proficient),
+    mean(math_4),
+    mean(poverty_status) |>
+      knitr::kable(digits = 3)
+  )
 
 ```
 
