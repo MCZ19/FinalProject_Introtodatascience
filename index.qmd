@@ -14,10 +14,10 @@ format:
 DC residents can have vastly different outcomes along many dimensions for different demographics. Oftentimes, the neighborhood in which you live and the community to which you belong can lead to vastly different outcomes in terms of health, education, employment opportunities, etc. This project aims to explore whether demographic differences amongst student populations in DC public schools can be used to predict educational and/or employment outcomes.
 
 # Literature Review
+
 {literature review}
 
 # Data Wrangling & Cleaning
-{description of data and cleaning process}
 
 ```{r}
 #packages used
@@ -47,7 +47,6 @@ library(glmnet) #glm package is incompatible with newer versions of R, according
 library(MachineShop)
 library(factoextra)
 ```
-
 
 ## Census Data
 
@@ -80,6 +79,7 @@ pop_stats <- get_acs(geography= "block group",
                   progress= FALSE)
 
 #st_write(demographics, "demographics.shp")
+##need additional files (e.g. .shx, .proj, etc.)
 demographics <- read_sf("demographics.shp")
 
 #data cleaning
@@ -113,7 +113,7 @@ wider_demographics <- demographics %>%
 
 This data comes from two sources, both of which provide data at the school level for elementary, middle, and high schools: District of Columbia Public Schools (proficiency) and DC Open Data (locations). The proficiency data includes both demographic data (racial and socioeconomic) and test data (English and math). The location data gives the latitude and longitude of each school. The dataset includes 73 public Elementary schools, 23 public Middle Schools, and 17 public High Schools in DC.
 
-Note: The only racial data that was usable was the black population. All other racial groups had too many "n<10" values, which were used for confidentiality reasons by the school system when the number of students in a racial group was less than 10. This is still a helpful measure of race-based school segregation.
+Note: The only racial data that was usable was the black population. All other racial groups had too many "n\<10" values, which were used for confidentiality reasons by the school system when the number of students in a racial group was less than 10. This is still a helpful measure of race-based school segregation.
 
 ```{r}
 #read in the school data
@@ -193,9 +193,11 @@ schools <- schools %>%
 ```
 
 # Exploratory Data Analysis
+
 There are several variables of interest in our data for the exploratory data analysis, including the school location, the income and insurance use for the census tract, school test scores, and racial makeup of the school population.
 
 ### Where are there NAs?
+
 First, we want to check if there are many missing values in the data. No more than 2 missing values exist for any one variable, and most have 0 or 1 missing value.
 
 ```{r}
@@ -203,9 +205,10 @@ map_dbl(.x = schools, .f = ~ sum(is.na(.x)))
 ```
 
 ### What does the distribution of the variables look like?
+
 One can get a general sense of whether a variable is left-skewed, right-skewed, or more centralized by comparing the the relative difference in median and mean values. When the median is greater than the mean, the data may be left-skewed, and vice-versa for right-skewed data.
 
-The percentage of school students who are considered poor is skewed to the left, meaning that a greater share of school populations have greater-than-average poverty (in this case, greater than 55%). ?????? for poverty among census tracts with a public school in the District of Columbia is slightly skewed to the right. ** How is this measured?**
+The percentage of school students who are considered poor is skewed to the left, meaning that a greater share of school populations have greater-than-average poverty (in this case, greater than 55%). ?????? for poverty among census tracts with a public school in the District of Columbia is slightly skewed to the right. \*\* How is this measured?\*\*
 
 The racial makeup of DC public schools is skewed to the left as well, meaning that most schools have a greater-than-average percentage of students who identify as Black or African American (in this case, greater than 69%).
 
@@ -253,6 +256,7 @@ schools %>%
 ```
 
 ### How do test scores vary by poverty
+
 We tested both English and math scores, and they follow a similar trend, with some obvious outliers. As we explore further, we may need to pay attention the potential negative effects of income-based school segregation.
 
 ```{r}
@@ -273,6 +277,7 @@ schools %>%
 ```
 
 ### How do test scores vary by racial makeup?
+
 This relationship is weaker than that of poverty and test scores, but generally test scores fall when schools have a higher Black/African American populations. As we explore further, we may need to pay attention the potential negative effects of racial school segregation.
 
 ```{r}
@@ -291,7 +296,6 @@ schools %>%
   geom_smooth(method = "lm", se = FALSE, color= "red1") +
   theme_minimal()
 ```
-
 
 # Geospatial Analysis
 
@@ -314,7 +318,6 @@ schools %>%
                        "of higher and \nlower average school scores")) + 
   theme_minimal()
 ```
-
 
 ```{r}
 # Distribution of poverty in schools across DC
@@ -348,8 +351,6 @@ schools %>%
                        "of schools with higher \nand lower Black populations")) + 
   theme_minimal()
 ```
-
-
 
 # Machine Learning Model
 
@@ -436,15 +437,15 @@ fviz_nbclust(educ_numeric,
 
 
 #3b
-kmeans_spec2 <- k_means(num_clusters = 1 %>% 
+kmeans_spec2 <- k_means(num_clusters = 1) %>% 
                           set_engine("stats", 
-                                     nstart = 100))
+                                     nstart = 100)
 
 kmeans_wflow2 <- workflow(preprocessor = educ_rec, 
                           spec = kmeans_spec2)
 
 educ_kmeans_1 <- kmeans_wflow2 %>% 
-  fit(data = schools_cond)
+  parsnip::fit(data = schools_cond)
 
 #once again, using this fit codechunk returns the same error
 
