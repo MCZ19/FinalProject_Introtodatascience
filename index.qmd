@@ -69,7 +69,11 @@ demographics <- get_acs(geography= "tract",
                                "insurance_men" = "B27001_002",
                                "insurance_women" = "B27001_030"),
                   year= 2022,
-                  progress= FALSE)
+                  progress= FALSE) |>
+  select(-NAME,
+         -moe) %>%
+  pivot_wider(names_from = "variable",
+              values_from = "estimate")
 
 #Loading Population and medicaid separately, as they are at a different geo level
 block_stats <- get_acs(geography= "block group",
@@ -101,20 +105,15 @@ block_stats_clean <- block_stats %>%
   mutate(medicaid = (medicaid_19under +
                        medicaid_19to34 +
                        medicaid_35to64 +
-                       medicaid_65older)) #|>
-  #aggregate()
-#^^^ Need to combine by GEOID, and sum the values associated with each GEOID
+                       medicaid_65older)) |>
+  select(-NAME) |> #Did not run properly dropping NAME in the earlier step
+  group_by(GEOID) %>%
+  summarise_all(sum) 
 
-demographics <- merge(demographics, block_stats_clean[, c("GEOID", "population")], by = "GEOID", all.x = TRUE)
-
-demographics <- demographics %>%
-  select(-moe)
+demographics <- merge(demographics, block_stats_clean, by = "GEOID", all.x = TRUE)
 
 map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
 
-wider_demographics <- demographics %>%
-  pivot_wider(names_from = "variable",
-              values_from = "estimate")
 #get rid of census tract with pop=0 or list
 wider_demographics <- wider_demographics %>%
   filter(population != 0) %>% 
