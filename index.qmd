@@ -530,6 +530,24 @@ pull(.cluster)
 ) %>%
 count(poverty_status, cluster)
 
+
+
+```
+
+```{r}
+
+educ_rec_pca <- recipe(
+formula = ~ .,
+data = schools_cond
+) %>%
+step_pca(all_numeric(), id = "pca")
+
+educ_pca <- educ_rec_pca %>%
+prep() %>%
+bake(new_data = schools_cond)
+
+educ_rec_pca %>% prep() %>%
+  tidy(id = "pca", type = "variance") %>% filter(terms == "variance") %>% mutate(pov_pct_var = poverty_status / sum(poverty_status)) %>% slice_head(n = 2)
 ```
 
 # Findings
