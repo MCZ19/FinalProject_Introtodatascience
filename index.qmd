@@ -75,16 +75,12 @@ demographics <- get_acs(geography= "tract",
   pivot_wider(names_from = "variable",
               values_from = "estimate")
 
-#Loading Population and medicaid separately, as they are at a different geo level
+#Loading Population separately, as it is at a different geo level
 block_stats <- get_acs(geography= "block group",
                   state= "DC",
                   county = "District of Columbia",
                   geometry= TRUE,
-                  variables= c("population" = "B01003_001",
-                               "medicaid_19under" = "B27010_002",
-                               "medicaid_19to34" = "B27010_018",
-                               "medicaid_35to64" = "B27010_034",
-                               "medicaid_65older" = "B27010_051"),
+                  variables= c("population" = "B01003_001"),
                   year= 2022,
                   progress= FALSE)
 
@@ -102,10 +98,6 @@ block_stats_clean <- block_stats %>%
   group_by(GEOID) %>% 
   pivot_wider(names_from = "variable",
               values_from = "estimate")|>
-  mutate(medicaid = (medicaid_19under +
-                       medicaid_19to34 +
-                       medicaid_35to64 +
-                       medicaid_65older)) |>
   select(-NAME) |> #Did not run properly dropping NAME in the earlier step
   group_by(GEOID) %>%
   summarise_all(sum) 
@@ -115,19 +107,25 @@ demographics <- merge(demographics, block_stats_clean, by = "GEOID", all.x = TRU
 map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
 
 #get rid of census tract with pop=0 or list
-wider_demographics <- wider_demographics %>%
+demographics_clean <- demographics %>%
   filter(population != 0) %>% 
   filter(population != 1983) %>%
   mutate(poverty_status = as.numeric(poverty_status),
-          SNAP_participation = as.numeric(SNAP_participation),
-          insurance_coverage = as.numeric(insurance_coverage),
-          medicaid = as.numeric(medicaid))
+         poverty_universe = as.numeric(poverty_universe),
+         SNAP_universe = as.numeric(SNAP_universe),
+         SNAP_status = as.numeric(SNAP_status),
+         insurance_universe = as.numeric(insurance_universe),
+         insurance_men = as.numeric(insurance_men),
+         insurance_women = as.numeric(insurance_women),
+         population = as.numeric(population),
+         income = as.numeric(DP03_0062))
+
 #convert totals to percentages
-wider_demographics <- wider_demographics %>%
-  mutate(poverty_perc = (poverty_status/population),
-         SNAP_perc = (SNAP_participation/population),
-         insurance_perc = (insurance_coverage/population),
-         medicaid_perc = (medicaid/population))
+demographics_percap <- demographics_clean %>%
+  mutate(poverty_perc = (poverty_status/poverty_universe),
+         SNAP_perc = (SNAP_status/SNAP_universe),
+         insurance_perc = ((insurance_men + insurance_women)
+                           / population))
 
 ```
 
