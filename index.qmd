@@ -169,7 +169,7 @@ school_locations <- st_as_sf(school_locations,
 ```{r}
 # match locations and demographics
 st_crs(school_locations)
-schools <- st_join(wider_demographics, school_locations,
+schools <- st_join(demographics_percap, school_locations,
                    join= st_contains)
 ```
 
@@ -179,8 +179,7 @@ schools <- st_join(wider_demographics, school_locations,
 # reducing NAs and changing names
 schools <- schools %>%
   filter(!is.na(type)) %>%
-  filter(!is.na(school_name)) %>%
-  rename(income = DP03_0062)
+  filter(!is.na(school_name))
 
 #turning school type into a factor
 schools <- schools %>%
@@ -331,8 +330,8 @@ schools %>%
   geom_sf(data= schools,
           mapping= aes(fill= percent_ela_proficient)) +
   scale_fill_continuous(name = "English Proficiency Rate",
-                        low= "firebrick",
-                        high= "darkorange") +
+                        low= "orange",
+                        high= "firebrick") +
   labs(title= paste("Schools with higher English proficiency rates",
                     "are \nconcentrated in Northeast DC"),
        subtitle= paste("DC Census Tracts with public schools show distribution",
@@ -382,8 +381,7 @@ schools %>%
 ```{R}
 # this is from Mitch and I's stretch exercise
 schools_cond <- schools |>
-  select(-NAME, 
-         -geometry, 
+  select(-geometry, 
          -GRADES, 
          -GEOID,
          -school_name,
@@ -391,6 +389,8 @@ schools_cond <- schools |>
   st_drop_geometry() |>
   na.omit() %>%
   mutate_if(is.character, as.numeric)
+
+set.seed(8675309)
 
 educ_rec <- recipe(formula = ~., data = schools_cond) %>% 
   step_normalize %>% 
@@ -472,18 +472,16 @@ kmeans_wflow2 <- workflow(preprocessor = educ_rec,
 educ_kmeans_1 <- kmeans_wflow2 %>% 
   parsnip::fit(data = schools_cond)
 
-#once again, using this fit codechunk returns the same error
-
 #3c
 
 cor(schools_cond)
 #For Math Proficient 
-#ela_proficient, math_4, #poverty_status
+# ela_proficient, math_4, #poverty_status
 
-bind_cols(schools_cond,
-          cluster = educ_kmeans_1 |>
-            extract_cluster_assignment() |>
-            pull(.cluster)) |>
+
+#deciding variables                      
+extract_cluster_assignment() |>  
+  bind_cols(schools_cond, cluster = educ_kmeans_1 |> pull(.cluster)) |>
   group_by(cluster) |>
   summarize(
     mean(ela_proficient),
@@ -491,6 +489,46 @@ bind_cols(schools_cond,
     mean(poverty_status) |>
       knitr::kable(digits = 3)
   )
+
+# modeling with k = 2 clusters 
+
+kmeans_spec_k2 <- k_means(num_clusters = 2) %>% 
+                          set_engine("stats", 
+                                     nstart = 100)
+
+kmeans_wflow_k2 <- workflow(preprocessor = educ_rec, 
+                          spec = kmeans_spec_k2)
+
+educ_kmeans_k2 <- kmeans_wflow_k2 %>% 
+  parsnip::fit(data = schools_cond)
+
+bind_cols(
+select(schools_cond, ela_proficient, math_4, poverty_status),
+cluster = educ_kmeans_k2 %>%
+extract_cluster_assignment() %>%
+pull(.cluster)
+) %>%
+count(poverty_status, cluster)
+
+#modeling with k = 3 clusters
+
+kmeans_spec_k3 <- k_means(num_clusters = 3) %>% 
+                          set_engine("stats", 
+                                     nstart = 100)
+
+kmeans_wflow_k3 <- workflow(preprocessor = educ_rec, 
+                          spec = kmeans_spec_k3)
+
+educ_kmeans_k3 <- kmeans_wflow2 %>% 
+  parsnip::fit(data = schools_cond)
+
+bind_cols(
+select(schools_cond, ela_proficient, math_4, poverty_status),
+cluster = educ_kmeans_k3 %>%
+extract_cluster_assignment() %>%
+pull(.cluster)
+) %>%
+count(poverty_status, cluster)
 
 ```
 
