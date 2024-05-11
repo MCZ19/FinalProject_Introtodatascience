@@ -114,8 +114,17 @@ map_dbl(.x = demographics, .f = ~ sum(is.na(.x)))
 
 wider_demographics <- demographics %>%
   pivot_wider(names_from = "variable",
-              values_from = "estimate") |>
-  #convert totals to percentages
+              values_from = "estimate")
+#get rid of census tract with pop=0 or list
+wider_demographics <- wider_demographics %>%
+  filter(population != 0) %>% 
+  filter(population != 1983) %>%
+  mutate(poverty_status = as.numeric(poverty_status),
+          SNAP_participation = as.numeric(SNAP_participation),
+          insurance_coverage = as.numeric(insurance_coverage),
+          medicaid = as.numeric(medicaid))
+#convert totals to percentages
+wider_demographics <- wider_demographics %>%
   mutate(poverty_perc = (poverty_status/population),
          SNAP_perc = (SNAP_participation/population),
          insurance_perc = (insurance_coverage/population),
@@ -243,9 +252,9 @@ schools %>%
   scale_x_continuous(breaks= c(0, .5, 1)) +
   facet_wrap(~type) +
   labs(title= paste("Across types of schools, populations tend to have greater",
-                    "than 50% poverty"),
+                    "\nthan 50% poverty"),
        subtitle= paste("Elementary Schools are more segregated by poverty",
-                       "level than Middle and High Schools"),
+                       "level than Middle \nand High Schools"),
        x= "Percent of students who experience poverty",
        y= "Number of schools") +
   theme_minimal()
@@ -260,13 +269,12 @@ schools %>%
   scale_x_continuous(breaks= c(0, .5, 1)) +
   facet_wrap(~type) +
   labs(title= paste("Across types of schools, most student populations are",
-                    "majority-Black and African American"),
+                    "\nmajority-Black and African American"),
        subtitle= paste("Many schools have nearly or 100% Black/African American",
                        "student populations"),
        x= "Percent of students who are Black/African American",
        y= "Number of schools") +
   theme_minimal()
-
 ```
 
 ### How do test scores vary by poverty
@@ -281,9 +289,9 @@ schools %>%
          color= "royalblue1") +
   geom_point(color= "grey50") +
   labs(title= paste("As the percent of students per school who experience",
-                    "poverty rises, English proficiency rates fall"),
+                    "\npoverty rises, English proficiency rates fall"),
        subtitle= paste("There are several schools that are clear outliers or",
-                       "stray from the general trend"),
+                       "stray from the \ngeneral trend"),
        x= "Percent of students who experience poverty",
        y= "Percent of students who received proficient English scores") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -301,10 +309,10 @@ schools %>%
                       y= percent_ela_proficient)) +
   geom_point(color= "grey50") +
   labs(title= paste("As the percent of students per school who identify as",
-                    "Black or African American rises, English proficiency",
+                    "Black \nor African American rises, English proficiency",
                     "rates fall"),
        subtitle= paste("This appears to be a weak relationship as many schools",
-                       "stray from the general trend"),
+                       "stray from the \ngeneral trend"),
        x= "Percent of students who experience poverty",
        y= "Percent of students who received proficient English scores") +
   geom_smooth(method = "lm", se = FALSE, color= "red1") +
@@ -325,7 +333,9 @@ schools %>%
   geom_sf(data= states[states$STUSPS == "DC", ]) +
   geom_sf(data= schools,
           mapping= aes(fill= percent_ela_proficient)) +
-  scale_fill_continuous(name = "English Proficiency Rate") +
+  scale_fill_continuous(name = "English Proficiency Rate",
+                        low= "firebrick",
+                        high= "darkorange") +
   labs(title= paste("Schools with higher English proficiency rates",
                     "are \nconcentrated in Northeast DC"),
        subtitle= paste("DC Census Tracts with public schools show distribution",
@@ -341,7 +351,9 @@ schools %>%
   geom_sf(data= states[states$STUSPS == "DC", ]) +
   geom_sf(data= schools,
           mapping= aes(fill= percent_poor)) +
-  scale_fill_continuous(name = "Percent of students in poverty") +
+  scale_fill_continuous(name = "Percent of students in poverty",
+                        low= "royalblue",
+                        high= "navy") +
   labs(title= paste("Schools with the most students in poverty",
                     "are concentrated \nin Southeast DC"),
        subtitle= paste("DC Census Tracts with public schools show distribution",
@@ -358,7 +370,9 @@ schools %>%
   geom_sf(data= schools,
           mapping= aes(fill= percent_black)) +
   scale_fill_continuous(name = paste("Percent of students who are \nBlack or",
-                                     "African American")) +
+                                     "African American"),
+                        low= "greenyellow",
+                        high= "green4") +
   labs(title= paste("Most schools in East and Southeast DC are over",
                     "75% \nBlack or African American"),
        subtitle= paste("DC Census Tracts with public schools show distribution",
