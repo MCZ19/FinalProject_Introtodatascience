@@ -253,9 +253,9 @@ map_dbl(.x = schools, .f = ~ sum(is.na(.x)))
 
 ### What does the distribution of the variables look like?
 
-One can get a general sense of whether a variable is left-skewed, right-skewed, or more centralized by comparing the the relative difference in median and mean values. When the median is greater than the mean, the data may be left-skewed, and vice-versa for right-skewed data.
+One can get a general sense of whether a variable is left-skewed, right-skewed, or more centralized by comparing the relative difference in median and mean values. When the median is greater than the mean, the data may be left-skewed, and vice-versa for right-skewed data.
 
-The percentage of school students who are considered poor is skewed to the left, meaning that a greater share of school populations have greater-than-average poverty (in this case, greater than 55%). ?????? for poverty among census tracts with a public school in the District of Columbia is slightly skewed to the right. \*\* How is this measured?\*\*
+The percentage of school students who are considered poor is skewed to the left, meaning that a greater share of school populations have greater-than-average poverty (in this case, greater than 55%).
 
 The racial makeup of DC public schools is skewed to the left as well, meaning that most schools have a greater-than-average percentage of students who identify as Black or African American (in this case, greater than 69%).
 
@@ -641,7 +641,7 @@ ggplot() +
 
 #### K Means Model
 
-For our kmeans cluster analysis, our model shows that the optimal clustering of components is 1. We used gap statistics and silhouette width to determine optimal number of clusters, k = 1. Our first principal component accounts for almost all of our variation - 99%. If we were doing this as a professional analysis, we would consider alternative models, such as Manhattan, Minkowski, or Gower distances models. These would be more robust to outliers, and can better capture features that deviate from normal.
+For our kmeans cluster analysis, our model shows that the optimal clustering of components is 1. We used gap statistics and silhouette width to determine optimal number of clusters, k = 1. Our first principal component accounts for almost all of our variation, 99%. If we were doing this as a professional analysis, we would consider alternative models, such as Manhattan, Minkowski, or Gower distances models. These would be more robust to outliers, and can better capture features that deviate from normal. Cluster analysis is used to determine the similarity between observations to their variables. A 99 percent similarity as indicated by the first principal component would be considered high.
 
 ### Supervised Machine Learning (Decision Tree Model)
 
