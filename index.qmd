@@ -50,7 +50,7 @@ library(factoextra)
 
 ## Census Data
 
-This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia. The variables included are income, poverty status, SNAP participation, insurance coverage, Medicaid use, and occupants per room.
+This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia. The variables included are income, poverty status, SNAP participation, and insurance coverage.  Population level statistics were recorded at the block group level, thus requiring some manipulation to join with other tract level variables.
 
 ```{r}
 #load variables
