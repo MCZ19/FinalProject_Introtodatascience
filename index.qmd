@@ -1,6 +1,6 @@
 ---
 title: "Index"
-author: "Anisha Kalra, Hannah Shepard-Moore, Gabriel Taylor, and Mitchell Zupko"
+author: "Hannah Shepard-Moore, Gabriel Taylor, Mitchell Zupko, and Anisha Kalra"
 editor: visual
 execute:
   warning: false
@@ -15,7 +15,31 @@ DC residents can have vastly different outcomes along many dimensions for differ
 
 # Literature Review
 
-{literature review}
+**Introduction:**
+
+Given the number of variables that can be involved in the notion of socioeconomic demographics, many of the current studies and literature often take a different approach and focus on specific aspects of this broader concept. The research articles included in this literature review uncover common themes across studies conducted on this topic. The review of existing research on this topic and the synthesis conducted provides a strong foundation and helpful background context for the data analysis conducted on the research question stated above.
+
+**Overview of Findings Across Existing Studies:**
+
+In an article published by the American Psychology Association, the relation between social class and job search outcomes was studied. It was noted that the concept of “self-efficacy” is key when it comes to the job search process (DeOrtentiis, et al. 4). For example, the study stated that the mere act of witnessing successful job outcomes in one’s personal life is likely to lead to stronger confidence in one’s ability to successfully obtain employment opportunities for themselves (DeOrtentiis, et al. 4). This indicates that there may be a correlation between socioeconomic status and employment outcomes for an entire family. The multi-generational impacts of socioeconomic status is something to explore further in subsequent analyses. In the research question for this study, the goal is to understand the effects of socioeconomic status of students and its impact on educational and employment outcomes. The initial findings of the APA article indicate that the effects of the social class that one grows up in also impacts the outcomes of students themselves through qualitative means such as confidence (DeOrtentiis, et al. 4).
+
+Additionally, a study published by the National Library of Medicine shares the impacts of socioeconomic status on psychological factors such as feelings and behavior (Manstead 1). The article noted that socioeconomic factors and the background one comes from often “reinforce these influences of social class background” (Manstead 1). This point further reiterates the impact socioeconomic factors have on outcomes related to education and employment, indicating that the social class status of a household one is raised in can play a role throughout an individual’s life.
+
+According to a study conducted by the National Center for Education Statistics (NCES), postsecondary education status was analyzed for ninth-grade students based on socioeconomic status (NCES). This research indicates that students who fell in the lowest fifth quintile of socioeconomic status had fewer individuals (7%) in the “highly-selective, 4-year institution” category, whereas students who fell in the highest fifth quintile of socioeconomic status had 37% of students in the category of “highly-selective, 4-year institution” (NCES). This data suggests that socioeconomic factors do play a significant role in the outcomes of higher education, which can impact future employment outcomes as well.\
+
+**Synthesis of Trends and Conclusion**
+
+Overall, many of the current studies and data analyses conducted on the topic of impacts of socioeconomic status on education and employment outcomes indicate that socioeconomic status often does have an impact on higher education and employment outcomes. Studies such as the one noted above by APA suggest that qualitative means such as confidence can vary based on an individual’s socioeconomic status, which can, in turn, play a role in the ability to obtain employment successfully (DeOrtentiis, et al. 4). Additionally, the data analysis conducted by the National Center for Education Statistics uncovers existing trends of postsecondary education outcomes as it relates to socioeconomic status of high school students (NCES).
+
+These findings provide meaningful background context as our group conducts data analysis on this topic to explore trends in this arena and answer the research question at hand.
+
+Work Cited:
+
+National Center for Education Statistics (NCES). (2022). Young Adult Educational and Employment Outcomes by Family Socioeconomic Status. Condition of Education. U.S. Department of Education, Institute of Education Sciences. Retrieved \[date\], from <https://nces.ed.gov/programs/coe/indicator/tbe>.
+
+Manstead ASR. The psychology of social class: How socioeconomic status impacts thought, feelings, and behaviour. Br J Soc Psychol. 2018 Apr;57(2):267-291. doi: 10.1111/bjso.12251. Epub 2018 Feb 28. PMID: 29492984; PMCID: PMC5901394.
+
+DeOrtentiis, P. S., Van Iddekinge, C. H., & Wanberg, C. R. (2021, May 17). Different Starting Lines, Different Finish Times: The Role of Social Class in the Job Search Process. Journal of Applied Psychology. Advance online publication. http://dx.doi.org/10.1037/apl0000915
 
 # Data Wrangling & Cleaning
 
@@ -46,11 +70,15 @@ library(stopwords)
 library(glmnet) #glm package is incompatible with newer versions of R, according to error messages
 library(MachineShop)
 library(factoextra)
+library(rsample)
+library(rpart)
+library(tidymodels)
+library(parsnip)
 ```
 
 ## Census Data
 
-This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia. The variables included are income, poverty status, SNAP participation, and insurance coverage.  Population level statistics were recorded at the block group level, thus requiring some manipulation to join with other tract level variables.
+This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia. The variables included are income, poverty status, SNAP participation, and insurance coverage. Population level statistics were recorded at the block group level, thus requiring some manipulation to join with other tract level variables.
 
 ```{r}
 #load variables
@@ -620,5 +648,67 @@ ggplot() +
 
 For our kmeans cluster analysis, our model shows that the optimal clustering of components is 1. We used gap statistics and silhouette width to determine optimal number of clusters, k = 1. Our first principal component accounts for almost all of our variation - 99%. If we were doing this as a professional analysis, we would consider alternative models, such as Manhattan, Minkowski, or Gower distances models. These would be more robust to outliers, and can better capture features that deviate from normal.
 
+### Supervised Machine Learning (Decision Tree Model)
 
-#### [insert analysis of hannah and anisha's model]
+Dataset Source: This data comes from the 2022 American Community Survey, and includes census tract-level data in the District of Columbia.
+
+```{r}
+#Set seed and split into training and test data
+set.seed(20220414)
+schools_split <- initial_split(data = schools, prop = 0.75)
+schools_train <- training(x = schools)
+schools_test <- testing(x = schools)
+
+
+#Create Recipe
+cart_schools_rec <- 
+  recipe(formula = class_ela_proficient ~., data = schools_train_dt) %>%
+  step_corr(all_predictors())
+
+#Create model
+dectree_mod <-
+  decision_tree() %>%
+  set_engine(engine = "rpart") %>%
+  set_mode(mod = "classification")
+
+#Create a workflow
+dectree_mod_wf <- workflow() %>%
+  add_recipe(cart_schools_rec) %>%
+  add_model(dectree_mod)
+
+#Cross-fold validation
+folds_resample <- vfold_cv(data = schools_train_dt, v = 5)
+
+#Fit the Model
+dectree_fit <- dectree_mod_wf %>%
+  fit(data = schools_train_dt)
+rpart.plot::rpart.plot(x = dectree_fit$fit$fit$fit)
+
+#Add Resamples
+dectree_fit_resamples <-
+  dectree_mod_wf %>%
+  fit_resamples(resamples = folds_resample)
+```
+
+### Evaluation of Supervised Machine Learning Model (Decision Tree Model)
+
+```{r}
+#Evaluate Model
+collect_metrics(dectree_fit_resamples, summarize = TRUE)
+```
+
+### Interpretation of Supervised Machine Learning Model (Decision Tree Model)
+
+**Background:**
+
+For this dataset, we created a binary variable called “proficiency” from the original variable that indicates the percentage of students in a school that scored a 4 or a 5 on the DC PARCC test. The variable created indicates if a given school had 50% or more students scoring above a 4 or 5 on the DC PARCC exam, the school is “proficient” in English language exam and if a school had less than 50% of students scoring above a 4 or 5 on the DC PARCC exam, the school is “not proficient” in the English language exam. The reason we chose 50% as the threshold was because the data itself showed that not many schools in the DC area had high percentages of students scoring above a 4 or 5 on the DC PARCC exam.
+
+**Conclusions:**
+
+The decision tree model created for our dataset indicates that 73% of schools (a majority) in the dataset are not proficient in English language exam (or that 73% of schools had less than 50% of students scoring a 4 or 5 on the English language exam). 27% of schools in the dataset are proficient in the English language exam (27% of schools had 50% or more students performing higher than a 4 or 5 on the English language exam). Additionally, the decision tree model selected the variable “Percent_poor” as a strong predictor for English language proficiency scores. Percent_poor indicates the percentage of students in a given school that are at or below the poverty line.
+
+If the percentage of students at or below the poverty line in a given school is greater than or equal to 27%, 91% of schools have a majority of students not proficient in the English language exam (and this makes up 81% of the total schools). On the other hand, if the percentage of students in a given school above the poverty line is greater than 27%, the school is likely categorized as proficient in the English language exam (and this makes up 19% of the total schools).
+
+Overall, it was surprising that so many schools were categorized in the “not proficient” category. This model also explains that socioeconomic factors (such as, being above or below the poverty line) do play a role in educational outcomes (such as proficiency in English language exams).
+
+Looking at the error metrics, the accuracy is 89%. Accuracy is the the proportion of correctly classified observations (true positives and true negatives) out of the total number of observations. So 89% of observations were correctly classified by the model. In this case, 89% is a decent but not perfect accuracy measure, but is generally good at predicting true cases.
