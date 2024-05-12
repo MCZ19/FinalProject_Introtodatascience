@@ -11,29 +11,29 @@ format:
 
 # Project Goals
 
-DC residents can have vastly different outcomes along many dimensions for different demographics. Oftentimes, the neighborhood in which you live and the community to which you belong can lead to vastly different outcomes in terms of health, education, employment opportunities, etc. This project aims to explore whether demographic differences amongst student populations in DC public schools can be used to predict educational and/or employment outcomes.
+DC residents can have vastly different outcomes based upon varying demographics. Oftentimes, the neighborhood in which you live and the community to which you belong can lead to vastly different outcomes in terms of health, education, employment opportunities, etc. This project aims to explore whether demographic differences among student populations in DC public schools can be used to predict educational and/or employment outcomes.
 
 # Literature Review
 
 **Introduction:**
 
-Given the number of variables that can be involved in the notion of socioeconomic demographics, many of the current studies and literature often take a different approach and focus on specific aspects of this broader concept. The research articles included in this literature review uncover common themes across studies conducted on this topic. The review of existing research on this topic and the synthesis conducted provides a strong foundation and helpful background context for the data analysis conducted on the research question stated above.
+Given the number of variables that can be involved in the notion of socioeconomic demographics, many of the current studies and literature take a different approach on the specific aspects of this broader concept. The research articles included in this literature review uncover common themes across studies conducted on this topic. The review of existing research and the synthesis conducted provides helpful background context for the data analysis conducted on our research question.
 
 **Overview of Findings Across Existing Studies:**
 
 In an article published by the American Psychology Association, the relation between social class and job search outcomes was studied. It was noted that the concept of “self-efficacy” is key when it comes to the job search process (DeOrtentiis, et al. 4). For example, the study stated that the mere act of witnessing successful job outcomes in one’s personal life is likely to lead to stronger confidence in one’s ability to successfully obtain employment opportunities for themselves (DeOrtentiis, et al. 4). This indicates that there may be a correlation between socioeconomic status and employment outcomes for an entire family. The multi-generational impacts of socioeconomic status is something to explore further in subsequent analyses. In the research question for this study, the goal is to understand the effects of socioeconomic status of students and its impact on educational and employment outcomes. The initial findings of the APA article indicate that the effects of the social class that one grows up in also impacts the outcomes of students themselves through qualitative means such as confidence (DeOrtentiis, et al. 4).
 
-Additionally, a study published by the National Library of Medicine shares the impacts of socioeconomic status on psychological factors such as feelings and behavior (Manstead 1). The article noted that socioeconomic factors and the background one comes from often “reinforce these influences of social class background” (Manstead 1). This point further reiterates the impact socioeconomic factors have on outcomes related to education and employment, indicating that the social class status of a household one is raised in can play a role throughout an individual’s life.
+Additionally, a study published by the National Library of Medicine shares the impacts of socioeconomic status on psychological factors such as feelings and behavior (Manstead. 1). The article noted that socioeconomic factors and the background one comes from often “reinforce these influences of social class background” (Manstead. 1). This point further reiterates the impact socioeconomic factors have on outcomes related to education and employment, indicating that the social class status of a household one is raised in can play a role throughout an individual’s life.
 
 According to a study conducted by the National Center for Education Statistics (NCES), postsecondary education status was analyzed for ninth-grade students based on socioeconomic status (NCES). This research indicates that students who fell in the lowest fifth quintile of socioeconomic status had fewer individuals (7%) in the “highly-selective, 4-year institution” category, whereas students who fell in the highest fifth quintile of socioeconomic status had 37% of students in the category of “highly-selective, 4-year institution” (NCES). This data suggests that socioeconomic factors do play a significant role in the outcomes of higher education, which can impact future employment outcomes as well.\
 
 **Synthesis of Trends and Conclusion**
 
-Overall, many of the current studies and data analyses conducted on the topic of impacts of socioeconomic status on education and employment outcomes indicate that socioeconomic status often does have an impact on higher education and employment outcomes. Studies such as the one noted above by APA suggest that qualitative means such as confidence can vary based on an individual’s socioeconomic status, which can, in turn, play a role in the ability to obtain employment successfully (DeOrtentiis, et al. 4). Additionally, the data analysis conducted by the National Center for Education Statistics uncovers existing trends of postsecondary education outcomes as it relates to socioeconomic status of high school students (NCES).
+Overall, many of the current studies conducted on the topic of the impacts of socioeconomic status on education and employment outcomes indicate that socioeconomic status often does have an impact on higher education and employment outcomes. Studies such as the one noted above by the APA suggest that qualitative means such as confidence can vary based on an individual’s socioeconomic status, which can, in turn, play a role in one's ability to obtain employment successfully (DeOrtentiis, et al. 4). Additionally, the data analysis conducted by the National Center for Education Statistics uncovers existing trends of postsecondary education outcomes as it relates to socioeconomic status of high school students (NCES).
 
 These findings provide meaningful background context as our group conducts data analysis on this topic to explore trends in this arena and answer the research question at hand.
 
-Work Cited:
+**Work Cited:**
 
 National Center for Education Statistics (NCES). (2022). Young Adult Educational and Employment Outcomes by Family Socioeconomic Status. Condition of Education. U.S. Department of Education, Institute of Education Sciences. Retrieved \[date\], from <https://nces.ed.gov/programs/coe/indicator/tbe>.
 
@@ -634,11 +634,6 @@ ggplot() +
   theme_minimal()
 
 #Plotting our principal components with k = 3 lends credence to our optimal clustering being k = 1.
-
-```
-
-```{r}
-
 
 ```
 
