@@ -114,7 +114,7 @@ block_stats <- get_acs(geography= "block group",
 
 #st_write(demographics, "demographics.shp")
 ##need additional files (e.g. .shx, .proj, etc.)
-demographics <- read_sf("demographics.shp")
+#demographics <- read_sf("demographics.shp")
 
 #data cleaning
 
@@ -159,7 +159,7 @@ demographics_percap <- demographics_clean %>%
 
 ## School Demographics, Test Scores, and Locations
 
-This data comes from two sources, both of which provide data at the school level for elementary, middle, and high schools: District of Columbia Public Schools (proficiency) and DC Open Data (locations). The proficiency data includes both demographic data (racial and socioeconomic) and test data (English and math). The location data gives the latitude and longitude of each school. The dataset includes 73 public Elementary schools, 23 public Middle Schools, and 17 public High Schools in DC.
+This data comes from two sources, both of which provide data at the school level for elementary, middle, and high schools: District of Columbia Public Schools (proficiency) and DC Open Data (locations). The proficiency data includes both demographic data (racial and socioeconomic) and test data (English and math). The location data gives the latitude and longitude of each school. The dataset includes 73 public Elementary schools, 23 public Middle Schools, and 17 public High Schools in DC. <https://dcps.dc.gov/publication/dcps-data-set-parcc> <https://opendata.dc.gov/datasets/4ac321b2d409438ebd76a6569ad94034/explore>
 
 Note: The only racial data that was usable was the black population. All other racial groups had too many "n\<10" values, which were used for confidentiality reasons by the school system when the number of students in a racial group was less than 10. This is still a helpful measure of race-based school segregation.
 
@@ -649,15 +649,29 @@ Dataset Source: This data comes from the 2022 American Community Survey, and inc
 
 ```{r}
 #Set seed and split into training and test data
+schools_nogeo <- read_csv("schools_nogeo (3).csv")
+schools_nogeo <- schools_nogeo %>%
+  select(poverty_status,
+         SNAP_participation,
+         rm_occupants,
+         insurance_coverage,
+         medicaid,
+         income,
+         percent_black,
+         percent_poor,
+         binary_ela_proficient)
+schools_nogeo <- schools_nogeo %>%
+  mutate(binary_ela_proficient = as.factor(binary_ela_proficient))
+#Set seed and split into training and test data
 set.seed(20220414)
-schools_split <- initial_split(data = schools, prop = 0.75)
-schools_train <- training(x = schools)
-schools_test <- testing(x = schools)
+schools_split <- initial_split(data = schools_nogeo, prop = 0.75)
+schools_train <- training(x = schools_split)
+schools_test <- testing(x = schools_split)
 
 
 #Create Recipe
 cart_schools_rec <- 
-  recipe(formula = class_ela_proficient ~., data = schools_train_dt) %>%
+  recipe(formula = binary_ela_proficient ~., data = schools_train) %>%
   step_corr(all_predictors())
 
 #Create model
@@ -672,11 +686,11 @@ dectree_mod_wf <- workflow() %>%
   add_model(dectree_mod)
 
 #Cross-fold validation
-folds_resample <- vfold_cv(data = schools_train_dt, v = 5)
+folds_resample <- vfold_cv(data = schools_train, v = 5)
 
 #Fit the Model
 dectree_fit <- dectree_mod_wf %>%
-  fit(data = schools_train_dt)
+  parsnip::fit(data = schools_train)
 rpart.plot::rpart.plot(x = dectree_fit$fit$fit$fit)
 
 #Add Resamples
@@ -700,10 +714,10 @@ For this dataset, we created a binary variable called “proficiency” from the
 
 **Conclusions:**
 
-The decision tree model created for our dataset indicates that 73% of schools (a majority) in the dataset are not proficient in English language exam (or that 73% of schools had less than 50% of students scoring a 4 or 5 on the English language exam). 27% of schools in the dataset are proficient in the English language exam (27% of schools had 50% or more students performing higher than a 4 or 5 on the English language exam). Additionally, the decision tree model selected the variable “Percent_poor” as a strong predictor for English language proficiency scores. Percent_poor indicates the percentage of students in a given school that are at or below the poverty line.
+The decision tree model created for our dataset indicates that 73% of schools (a majority) in the dataset are not proficient in English language exam. Put simply, 73% of schools had less than 50% of students scoring a 4 or 5 on the English language exam.Conversely, 27% of schools in the dataset are proficient in the English language exam (27% of schools had 50% or more students performing higher than a 4 or 5 on the English language exam). Additionally, the decision tree model selected the variable “Percent_poor” as a strong predictor for English language proficiency scores. Percent_poor indicates the percentage of students in a given school that are at or below the poverty line.
 
-If the percentage of students at or below the poverty line in a given school is greater than or equal to 27%, 91% of schools have a majority of students not proficient in the English language exam (and this makes up 81% of the total schools). On the other hand, if the percentage of students in a given school above the poverty line is greater than 27%, the school is likely categorized as proficient in the English language exam (and this makes up 19% of the total schools).
+If the percentage of students at or below the poverty line in a given school is greater than or equal to 27%, there is a 91% chance that a majority of students were not proficient in their English language exam. In the dataset, this accounts for 81% of the total schools. On the other hand, if the percentage of students in a given school above the poverty line is greater than 27%, the school is likely categorized as proficient in the English language exam. In the dataset, this makes up 19% of the total schools.
 
-Overall, it was surprising that so many schools were categorized in the “not proficient” category. This model also explains that socioeconomic factors (such as, being above or below the poverty line) do play a role in educational outcomes (such as proficiency in English language exams).
+Overall, it was surprising that so many schools were categorized in the “not proficient” category. This model also explains that socioeconomic factors (being above or below the poverty line) do play a role in educational outcomes (proficiency in English language exams).
 
-Looking at the error metrics, the accuracy is 89%. Accuracy is the the proportion of correctly classified observations (true positives and true negatives) out of the total number of observations. So 89% of observations were correctly classified by the model. In this case, 89% is a decent but not perfect accuracy measure, but is generally good at predicting true cases.
+Looking at the error metrics, the accuracy is 90%. Accuracy is the the proportion of correctly classified observations (true positives and true negatives) out of the total number of observations. So 90% of observations were correctly classified by the model. In this case, 90% is a decent but not perfect accuracy measure, but is generally good at predicting true cases.
