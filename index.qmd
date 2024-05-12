@@ -535,9 +535,27 @@ pull(.cluster)
 ) %>%
 count(poverty_status, cluster)
 
+#Baking to produce PCA for visualizations
+educ_rec_pca <- recipe(
+  formula = ~.,
+  data = schools_cond
+) |>
+  step_pca(all_numeric(), id = "pca")
+
+educ_pca <- educ_rec_pca |>
+  prep() |>
+  bake(new_data = schools_cond)
+
+educ_rec_pca |>
+  prep() |>
+  tidy(id = "pca", type = "variance") |>
+  filter(terms == "variance") |>
+  mutate(pct_var = value/sum(value)) |>
+  slice_head(n = 2)
 
 educ_clusters <- bind_cols(
 select(schools_cond, ela_proficient, math_4, poverty_status),
+select(educ_pca, PC1, PC2),
 cluster1 = educ_kmeans_1 %>%
 extract_cluster_assignment() %>%
 pull(.cluster),
@@ -551,9 +569,43 @@ pull(.cluster)
 ggplot() +
   geom_point(
     data = educ_clusters,
-    mapping = aes( )
-  ) 
+    mapping = aes(PC1, PC2, color = factor(cluster1))
+  ) +
+  scale_color_manual(values = c("pink")) +
+  labs(
+    title = "K-Means with K=1 and PCA",
+    x = "PC1 (.99 of Variation)",
+    y = "PC2 (.01 of Variation)"
+  ) +
+  theme_minimal()
 
+ggplot() +
+  geom_point(
+    data = educ_clusters,
+    mapping = aes(PC1, PC2, color = factor(cluster2))
+  ) +
+  scale_color_manual(values = c("pink", "lightgreen")) +
+  labs(
+    title = "K-Means with K=2 and PCA",
+    x = "PC1 (.99 of Variation)",
+    y = "PC2 (.01 of Variation)"
+  ) +
+  theme_minimal()
+
+ggplot() +
+  geom_point(
+    data = educ_clusters,
+    mapping = aes(PC1, PC2, color = factor(cluster3))
+  ) +
+  scale_color_manual(values = c("pink", "lightgreen", "lightblue")) +
+  labs(
+    title = "K-Means with K=3 and PCA",
+    x = "PC1 (.99 of Variation)",
+    y = "PC2 (.01 of Variation)"
+  ) +
+  theme_minimal()
+
+#Plotting our principal components with k = 3 lends credence to our optimal clustering being k = 1.
 
 ```
 
@@ -563,3 +615,10 @@ ggplot() +
 ```
 
 # Findings
+
+#### K Means Model
+
+For our kmeans cluster analysis, our model shows that the optimal clustering of components is 1. We used gap statistics and silhouette width to determine optimal number of clusters, k = 1. Our first principal component accounts for almost all of our variation - 99%. If we were doing this as a professional analysis, we would consider alternative models, such as Manhattan, Minkowski, or Gower distances models. These would be more robust to outliers, and can better capture features that deviate from normal.
+
+
+#### [insert analysis of hannah and anisha's model]
