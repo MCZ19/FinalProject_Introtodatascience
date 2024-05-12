@@ -392,7 +392,9 @@ schools_cond <- schools |>
 
 set.seed(8675309)
 
-educ_rec <- recipe(formula = ~., data = schools_cond) %>% 
+educ_rec <- recipe(
+  formula = ~., 
+  data = schools_cond) %>% 
   step_normalize %>% 
   step_pca() 
 
@@ -472,24 +474,6 @@ kmeans_wflow2 <- workflow(preprocessor = educ_rec,
 educ_kmeans_1 <- kmeans_wflow2 %>% 
   parsnip::fit(data = schools_cond)
 
-educ_clusters <- bind_cols(
-select(schools_cond, ela_proficient, math_4, poverty_status),
-cluster1 = educ_kmeans_1 %>%
-extract_cluster_assignment() %>%
-pull(.cluster),
-cluster2 = educ_kmeans_k2 %>%
-  extract_cluster_assignment() %>%
-pull(.cluster),
-cluster3 = educ_kmeans_k3 %>% extract_cluster_assignment() %>%
-pull(.cluster)
-)
-
-ggplot() +
-  geom_point(
-    data = educ_clusters,
-    mapping = aes( )
-  ) 
-
 #3c
 
 cor(schools_cond)
@@ -498,8 +482,11 @@ cor(schools_cond)
 
 
 #deciding variables                      
-extract_cluster_assignment() |>  
-  bind_cols(schools_cond, cluster = educ_kmeans_1 |> pull(.cluster)) |>
+
+  bind_cols(
+    schools_cond, 
+    cluster = educ_kmeans_1 |> extract_cluster_assignment() |> pull(.cluster)
+    ) |>
   group_by(cluster) |>
   summarize(
     mean(ela_proficient),
@@ -517,7 +504,7 @@ kmeans_spec_k2 <- k_means(num_clusters = 2) %>%
 kmeans_wflow_k2 <- workflow(preprocessor = educ_rec, 
                           spec = kmeans_spec_k2)
 
- <- kmeans_wflow_k2 %>% 
+educ_kmeans_k2 <- kmeans_wflow_k2 %>% 
   parsnip::fit(data = schools_cond)
 
 bind_cols(
@@ -548,6 +535,24 @@ pull(.cluster)
 ) %>%
 count(poverty_status, cluster)
 
+
+educ_clusters <- bind_cols(
+select(schools_cond, ela_proficient, math_4, poverty_status),
+cluster1 = educ_kmeans_1 %>%
+extract_cluster_assignment() %>%
+pull(.cluster),
+cluster2 = educ_kmeans_k2 %>%
+  extract_cluster_assignment() %>%
+pull(.cluster),
+cluster3 = educ_kmeans_k3 %>% extract_cluster_assignment() %>%
+pull(.cluster)
+)
+
+ggplot() +
+  geom_point(
+    data = educ_clusters,
+    mapping = aes( )
+  ) 
 
 
 ```
